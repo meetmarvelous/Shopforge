@@ -16,7 +16,7 @@ $db = db();
 
 // Get current settings
 $settings = [];
-$settingsResult = $db->fetchAll("SELECT setting_key, setting_value FROM system_settings");
+$settingsResult = $db->fetchAll("SELECT setting_key, setting_value FROM settings");
 foreach ($settingsResult as $s) {
     $settings[$s['setting_key']] = $s['setting_value'];
 }
@@ -41,11 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     
     foreach ($settingsToUpdate as $key => $value) {
-        $exists = $db->exists('system_settings', 'setting_key = ?', [$key]);
+        $exists = $db->exists('settings', 'setting_key = ?', [$key]);
         if ($exists) {
-            $db->update('system_settings', ['setting_value' => $value], 'setting_key = ?', [$key]);
+            $db->update('settings', ['setting_value' => $value], 'setting_key = ?', [$key]);
         } else {
-            $db->insert('system_settings', ['setting_key' => $key, 'setting_value' => $value]);
+            $db->insert('settings', ['setting_key' => $key, 'setting_value' => $value]);
         }
         $settings[$key] = $value;
     }

@@ -54,8 +54,17 @@ define('DB_OPTIONS', [
 
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$scriptPath = dirname($_SERVER['SCRIPT_NAME']);
-$basePath = rtrim(str_replace('\\', '/', $scriptPath), '/');
+
+// Calculate base path from project root directory, not current script
+$documentRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
+$projectRoot = str_replace('\\', '/', __DIR__);
+$basePath = '';
+
+if (!empty($documentRoot) && strpos($projectRoot, $documentRoot) === 0) {
+    $basePath = substr($projectRoot, strlen($documentRoot));
+}
+
+$basePath = rtrim($basePath, '/');
 
 define('BASE_URL', $protocol . '://' . $host . $basePath);
 define('BASE_PATH', rtrim(str_replace('\\', '/', __DIR__), '/'));
@@ -135,6 +144,7 @@ define('PRODUCTS_PER_PAGE', 12);
 define('ORDERS_PER_PAGE', 10);
 define('USERS_PER_PAGE', 20);
 define('REVIEWS_PER_PAGE', 5);
+define('ADMIN_ITEMS_PER_PAGE', 15);
 
 // =============================================================================
 // IMAGE SETTINGS
