@@ -239,6 +239,12 @@ require_once __DIR__ . '/includes/sidebar.php';
     </main>
 
 <?php
+// Prepare chart data
+$dailyLabels = json_encode(array_map(fn($r) => date('M d', strtotime($r['date'])), $dailyRevenue));
+$dailyData = json_encode(array_map(fn($r) => (float)$r['revenue'], $dailyRevenue));
+$statusLabels = json_encode(array_map(fn($s) => ucfirst($s['status']), $statusBreakdown));
+$statusData = json_encode(array_map(fn($s) => (int)$s['count'], $statusBreakdown));
+
 $extraScripts = <<<SCRIPTS
 <script>
 // Daily Revenue Chart
@@ -246,10 +252,10 @@ const dailyCtx = document.getElementById('dailyRevenueChart').getContext('2d');
 new Chart(dailyCtx, {
     type: 'bar',
     data: {
-        labels: <?= json_encode(array_map(fn($r) => date('M d', strtotime($r['date'])), $dailyRevenue)) ?>,
+        labels: {$dailyLabels},
         datasets: [{
             label: 'Revenue',
-            data: <?= json_encode(array_map(fn($r) => (float)$r['revenue'], $dailyRevenue)) ?>,
+            data: {$dailyData},
             backgroundColor: 'rgba(99, 102, 241, 0.8)',
             borderRadius: 6
         }]
@@ -271,9 +277,9 @@ const statusCtx = document.getElementById('statusChart').getContext('2d');
 new Chart(statusCtx, {
     type: 'doughnut',
     data: {
-        labels: <?= json_encode(array_map(fn($s) => ucfirst($s['status']), $statusBreakdown)) ?>,
+        labels: {$statusLabels},
         datasets: [{
-            data: <?= json_encode(array_map(fn($s) => (int)$s['count'], $statusBreakdown)) ?>,
+            data: {$statusData},
             backgroundColor: ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#ef4444']
         }]
     },
@@ -287,3 +293,4 @@ SCRIPTS;
 ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
+
