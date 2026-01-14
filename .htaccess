@@ -1,0 +1,180 @@
+# ShopForge .htaccess
+# Apache configuration for security and URL handling
+
+# Enable Rewrite Engine
+RewriteEngine On
+
+# Set base directory
+RewriteBase /Vibe%20Coding/ShopForge/
+
+# =============================================================================
+# SECURITY HEADERS
+# =============================================================================
+
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Prevent MIME-type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (adjust as needed)
+    # Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.paystack.co"
+    
+    # Remove server signature
+    Header unset Server
+    Header always unset X-Powered-By
+</IfModule>
+
+# =============================================================================
+# DIRECTORY PROTECTION
+# =============================================================================
+
+# Disable directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^(config\.php|\.env|\.htaccess|composer\.json|composer\.lock)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Protect includes directory
+<IfModule mod_rewrite.c>
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^logs/ - [F,L]
+    RewriteRule ^vendor/ - [F,L]
+</IfModule>
+
+# =============================================================================
+# FILE TYPE RESTRICTIONS
+# =============================================================================
+
+# Block access to sensitive file types
+<FilesMatch "\.(sql|log|ini|sh|bak|config|dist|fla|inc|psd|sh|sql|swp)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# =============================================================================
+# PHP SETTINGS
+# =============================================================================
+
+<IfModule mod_php.c>
+    # Session security
+    php_flag session.cookie_httponly on
+    php_flag session.use_only_cookies on
+    php_flag session.use_strict_mode on
+    
+    # Upload limits
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    
+    # Execution limits
+    php_value max_execution_time 60
+    php_value max_input_time 60
+    
+    # Disable dangerous functions (if not already in php.ini)
+    # php_value disable_functions "exec,passthru,shell_exec,system,proc_open,popen"
+</IfModule>
+
+# =============================================================================
+# URL REWRITING (Clean URLs)
+# =============================================================================
+
+<IfModule mod_rewrite.c>
+    # Remove trailing slash
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [R=301,L]
+    
+    # Redirect to HTTPS in production (uncomment when SSL is ready)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Product page: /product/product-slug -> product.php?slug=product-slug
+    RewriteRule ^product/([a-zA-Z0-9_-]+)/?$ product.php?slug=$1 [L,QSA]
+    
+    # Category page: /category/category-slug -> category.php?slug=category-slug
+    RewriteRule ^category/([a-zA-Z0-9_-]+)/?$ category.php?slug=$1 [L,QSA]
+    
+    # User profile: /profile -> profile.php
+    RewriteRule ^profile/?$ profile.php [L,QSA]
+    
+    # Orders: /orders -> orders.php
+    RewriteRule ^orders/?$ orders.php [L,QSA]
+    
+    # Order detail: /order/123 -> order-detail.php?id=123
+    RewriteRule ^order/([0-9]+)/?$ order-detail.php?id=$1 [L,QSA]
+    
+    # Search: /search -> search.php
+    RewriteRule ^search/?$ search.php [L,QSA]
+</IfModule>
+
+# =============================================================================
+# CACHING
+# =============================================================================
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # CSS and JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # Fonts
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+</IfModule>
+
+# =============================================================================
+# COMPRESSION
+# =============================================================================
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# =============================================================================
+# ERROR PAGES
+# =============================================================================
+
+ErrorDocument 400 /Vibe%20Coding/ShopForge/error.php?code=400
+ErrorDocument 401 /Vibe%20Coding/ShopForge/error.php?code=401
+ErrorDocument 403 /Vibe%20Coding/ShopForge/error.php?code=403
+ErrorDocument 404 /Vibe%20Coding/ShopForge/error.php?code=404
+ErrorDocument 500 /Vibe%20Coding/ShopForge/error.php?code=500
